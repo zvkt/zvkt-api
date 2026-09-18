@@ -12,8 +12,8 @@ users = [
 ]
 
 messages = [
-    {"id": 1, "name": "Raihan", "message": "Hello!"},
-    {"id": 2, "name": "Budi", "message": "Hi!"}
+    {"time": 1, "name": "Raihan", "message": "Hello!"},
+    {"time": 2, "name": "Budi", "message": "Hi!"}
 ]
 
 def require_api_key(f):
@@ -72,7 +72,7 @@ def create_message():
     data = request.json
 
     message = {
-        "id": len(messages) + 1,
+        "time": len(messages) + 1,
         "name": data["name"],
         "message": data["message"]
     }
