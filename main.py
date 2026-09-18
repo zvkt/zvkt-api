@@ -1,0 +1,50 @@
+from flask import Flask, request, jsonify
+from functools import wraps
+
+app = Flask(__name__)
+
+API_KEY = "my-super-secret-key"
+
+users = [
+    {"id": 1, "name": "Raihan", "age": 18},
+    {"id": 2, "name": "Budi", "age": 19}
+]
+
+def require_api_key(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        key = request.headers.get("X-API-Key")
+
+        if key != API_KEY:
+            return jsonify({"error": "Invalid API key"}), 401
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+@app.route("/")
+def home():
+    return jsonify({"message": "API is running!"})
+
+@app.route("/users", methods=["GET"])
+@require_api_key
+def get_users():
+    return jsonify(users)
+
+@app.route("/users", methods=["POST"])
+@require_api_key
+def create_user():
+    data = request.json
+
+    user = {
+        "id": len(users) + 1,
+        "name": data["name"],
+        "age": data["age"]
+    }
+
+    users.append(user)
+
+    return jsonify(user), 201
+
+if __name__ == "__main__":
+    app.run(debug=True)
