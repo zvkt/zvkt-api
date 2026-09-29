@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from functools import wraps
 
@@ -6,15 +5,12 @@ app = Flask(__name__)
 
 API_KEY = "my-super-secret-key"
 
-users = [
-    {"id": 1, "name": "Raihan", "age": 18},
-    {"id": 2, "name": "Budi", "age": 19}
+# Penyimpanan data: name (string), x dan y (integer)
+data_points = [
+    {"name": "udin", "x": 1, "y": 2},
+    {"name": "budi", "x": 3, "y": 4},
 ]
 
-messages = [
-    {"time": 1, "name": "Raihan", "message": "Hello!"},
-    {"time": 2, "name": "Budi", "message": "Hi!"}
-]
 
 def require_api_key(f):
     @wraps(f)
@@ -29,57 +25,44 @@ def require_api_key(f):
     return decorated
 
 
+def is_int(value):
+    # bool termasuk subclass int di Python, jadi harus dikecualikan
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 @app.route("/")
 def home():
     return jsonify({"message": "API is running!"})
 
 
-# USERS
-
-@app.route("/users", methods=["GET"])
+@app.route("/data", methods=["GET"])
 @require_api_key
-def get_users():
-    return jsonify(users)
+def get_data():
+    return jsonify(data_points)
 
 
-@app.route("/users", methods=["POST"])
+@app.route("/data", methods=["POST"])
 @require_api_key
-def create_user():
-    data = request.json
+def create_data():
+    data = request.get_json(silent=True)
 
-    user = {
-        "id": len(users) + 1,
-        "name": data["name"],
-        "age": data["age"]
-    }
+    if not isinstance(data, dict):
+        return jsonify({"error": "Body harus berupa JSON"}), 400
 
-    users.append(user)
+    if "name" not in data or "x" not in data or "y" not in data:
+        return jsonify({"error": "name, x, dan y wajib diisi"}), 400
 
-    return jsonify(user), 201
+    if not isinstance(data["name"], str) or not data["name"].strip():
+        return jsonify({"error": "name harus berupa string dan tidak boleh kosong"}), 400
 
+    if not is_int(data["x"]) or not is_int(data["y"]):
+        return jsonify({"error": "x dan y harus integer"}), 400
 
-# MESSAGES
+    # Hanya ambil name, x, dan y, field lain dibuang
+    point = {"name": data["name"].strip(), "x": data["x"], "y": data["y"]}
+    data_points.append(point)
 
-@app.route("/message", methods=["GET"])
-@require_api_key
-def get_messages():
-    return jsonify(messages)
-
-
-@app.route("/message", methods=["POST"])
-@require_api_key
-def create_message():
-    data = request.json
-
-    message = {
-        "time": len(messages) + 1,
-        "name": data["name"],
-        "message": data["message"]
-    }
-
-    messages.append(message)
-
-    return jsonify(message), 201
+    return jsonify(point), 201
 
 
 if __name__ == "__main__":
