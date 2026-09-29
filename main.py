@@ -58,8 +58,18 @@ def create_data():
     if not is_int(data["x"]) or not is_int(data["y"]):
         return jsonify({"error": "x dan y harus integer"}), 400
 
-    # Hanya ambil name, x, dan y, field lain dibuang
-    point = {"name": data["name"].strip(), "x": data["x"], "y": data["y"]}
+    name = data["name"].strip()
+
+    # Cari data dengan name yang sama (tidak peduli huruf besar/kecil)
+    for point in data_points:
+        if point["name"].lower() == name.lower():
+            # Sudah ada -> update x dan y saja
+            point["x"] = data["x"]
+            point["y"] = data["y"]
+            return jsonify(point), 200
+
+    # Belum ada -> buat data baru
+    point = {"name": name, "x": data["x"], "y": data["y"]}
     data_points.append(point)
 
     return jsonify(point), 201
